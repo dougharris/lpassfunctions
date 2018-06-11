@@ -1,0 +1,45 @@
+LASTPASS_ERROR_PREFIX="LASTPASS ERROR:"
+
+_login_to_lastpass ()
+{
+    lpass status -q
+    status=$?
+    if [[ $status -ne 0 ]]
+    then
+        if [[ -z $LASTPASS_EMAIL ]]
+        then
+            echo "LASTPASS_EMAIL is not set. Cannot login to LastPass"
+        fi
+        lpass login $LASTPASS_EMAIL >/dev/null
+    fi
+}
+
+get_key_from_lastpass ()
+{
+    # This function assumes a custom note type with a field called "Key"
+    _login_to_lastpass
+
+    folder_for_keys=${LASTPASS_KEY_FOLDER:-API_KEYS}
+
+    desired_key=$folder_for_keys/$1
+    output=$(lpass show --field=Key $desired_key)
+    if [[ $? -ne 0 ]]
+    then
+        echo "$LASTPASS_ERROR_PREFIX $desired_key not found"
+    else
+        echo $output
+    fi
+}
+
+set_env_var_from_lastpass()
+{
+    desired_key=$1
+
+    value=$(get_key_from_lastpass $desired_key)
+    if [[ $value = ${LASTPASS_ERROR_PREFIX}* ]]
+    then
+        echo $value
+    else
+        export $desired_key=$value
+    fi
+}
