@@ -43,3 +43,11 @@ set_env_var_from_lastpass()
         export $desired_key=$value
     fi
 }
+
+autoset_all_lastpass_keys()
+{
+    _login_to_lastpass
+    for key_name in $(lpass ls ${LASTPASS_KEY_FOLDER:-API_KEYS} | awk '{print $1}' | egrep -v '/$' | awk -F/ '{print $2}' | xargs); do
+        set_env_var_from_lastpass $key_name
+    done
+}
